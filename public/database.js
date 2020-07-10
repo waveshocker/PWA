@@ -1,5 +1,5 @@
 let db;
-const request = indexedDB.open("budget", 1);
+const request = indexedDB.open("Budget History", 1);
 
 request.onupgradeneeded = function (event) {
   const db = event.target.result;
@@ -16,26 +16,26 @@ request.onsuccess = function (event) {
 };
 
 request.onerror = function (event) {
-  console.log("Woops! " + event.target.errorCode);
+  console.log("error " + event.target.errorCode);
 };
 
 function saveRecord(record) {
-  const transaction = db.transaction(["pending"], "readwrite");
-  const store = transaction.objectStore("pending");
+  const entry = db.transaction(["pending"], "readwrite");
+  const bank = entry.objectStore("pending");
 
-  store.add(record);
+  bank.add(record);
 }
 
 function checkDatabase() {
-  const transaction = db.transaction(["pending"], "readwrite");
-  const store = transaction.objectStore("pending");
-  const getAll = store.getAll();
+  const entry = db.transaction(["pending"], "readwrite");
+  const bank = entry.objectStore("pending");
+  const requestAll = bank.getAll();
 
-  getAll.onsuccess = function () {
-    if (getAll.result.length > 0) {
+  requestAll.onsuccess = function () {
+    if (requestAll.result.length > 0) {
       fetch("/api/transaction/bulk", {
         method: "POST",
-        body: JSON.stringify(getAll.result),
+        body: JSON.stringify(requestAll.result),
         headers: {
           Accept: "application/json, text/plain, */*",
           "Content-Type": "application/json"
@@ -44,17 +44,18 @@ function checkDatabase() {
         .then(response => response.json())
         .then(() => {
           // delete records if successful
-          const transaction = db.transaction(["pending"], "readwrite");
-          const store = transaction.objectStore("pending");
-          store.clear();
+          const entry = db.transaction(["pending"], "readwrite");
+          const bank = entry.objectStore("pending");
+          bank.clear();
         });
     }
   };
 }
+
 function deletePending() {
-  const transaction = db.transaction(["pending"], "readwrite");
-  const store = transaction.objectStore("pending");
-  store.clear();
+  const entry = db.transaction(["pending"], "readwrite");
+  const bank = entry.objectStore("pending");
+  bank.clear();
 }
 
 // listen for app coming back online
